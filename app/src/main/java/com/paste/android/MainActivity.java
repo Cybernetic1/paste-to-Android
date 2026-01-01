@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void copyToClipboard() {
-        if (lastReceivedText == null || lastReceivedText.isEmpty()) {
+        if (lastReceivedText.isEmpty()) {
             Toast.makeText(this, "No text to copy", Toast.LENGTH_SHORT).show();
             return;
         }
