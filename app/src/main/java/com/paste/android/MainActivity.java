@@ -1,5 +1,7 @@
 package com.paste.android;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -19,9 +22,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView ipText;
     private Button startButton;
     private Button stopButton;
+    private Button copyButton;
     private boolean serverRunning = false;
     private HttpServerService service;
     private boolean bound = false;
+    private String lastReceivedText = "";
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -49,9 +54,11 @@ public class MainActivity extends AppCompatActivity {
         ipText = findViewById(R.id.ipText);
         startButton = findViewById(R.id.startButton);
         stopButton = findViewById(R.id.stopButton);
+        copyButton = findViewById(R.id.copyButton);
 
         startButton.setOnClickListener(v -> startServer());
         stopButton.setOnClickListener(v -> stopServer());
+        copyButton.setOnClickListener(v -> copyToClipboard());
 
         updateUI();
         showIPAddress();
@@ -112,9 +119,23 @@ public class MainActivity extends AppCompatActivity {
     private void registerListener() {
         if (service != null) {
             service.setListener(text -> runOnUiThread(() -> {
+                lastReceivedText = text;
                 receivedText.setText("Received: " + text);
+                copyButton.setEnabled(true);
             }));
         }
+    }
+
+    private void copyToClipboard() {
+        if (lastReceivedText.isEmpty()) {
+            Toast.makeText(this, "No text to copy", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Received Text", lastReceivedText);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(this, "Text copied to clipboard", Toast.LENGTH_SHORT).show();
     }
 
     @Override
