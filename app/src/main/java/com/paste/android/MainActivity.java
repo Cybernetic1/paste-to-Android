@@ -1,12 +1,14 @@
 package com.paste.android;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.format.Formatter;
+import android.os.IBinder;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,6 +20,24 @@ public class MainActivity extends AppCompatActivity {
     private Button startButton;
     private Button stopButton;
     private boolean serverRunning = false;
+    private HttpServerService service;
+    private boolean bound = false;
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            HttpServerService.LocalBinder localBinder = (HttpServerService.LocalBinder) binder;
+            service = localBinder.getService();
+            bound = true;
+            registerListener();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            bound = false;
+            service = null;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
         updateUI();
         showIPAddress();
-
-        HttpServerService.setOnTextReceivedListener(text -> runOnUiThread(() -> {
-            receivedText.setText("Received: " + text);
-        }));
     }
 
     private void startServer() {
@@ -48,11 +64,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(serviceIntent);
         }
+        bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
         serverRunning = true;
         updateUI();
     }
 
     private void stopServer() {
+        if (bound) {
+            unbindService(connection);
+            bound = false;
+        }
         Intent serviceIntent = new Intent(this, HttpServerService.class);
         stopService(serviceIntent);
         serverRunning = false;
@@ -74,21 +95,42 @@ public class MainActivity extends AppCompatActivity {
     private void showIPAddress() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        int ip = wifiInfo.getIpAddress();
+        int ipInt = wifiInfo.getIpAddress();
         
-        @SuppressWarnings("deprecation")
-        String ipAddress = Formatter.formatIpAddress(ip);
+        // Convert IP address from int to string format
+        String ipAddress = String.format("%d.%d.%d.%d",
+            (ipInt & 0xff),
+            (ipInt >> 8 & 0xff),
+            (ipInt >> 16 & 0xff),
+            (ipInt >> 24 & 0xff));
         
         ipText.setText("Device IP: " + ipAddress + "\nPort: 8080\n\n" +
                 "To send text from Linux terminal:\n" +
                 "curl -X POST http://" + ipAddress + ":8080/paste -d \"Your text here\"");
     }
 
+    private void registerListener() {
+        if (service != null) {
+            service.setListener(text -> runOnUiThread(() -> {
+                receivedText.setText("Received: " + text);
+            }));
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        HttpServerService.setOnTextReceivedListener(text -> runOnUiThread(() -> {
-            receivedText.setText("Received: " + text);
-        }));
+        if (bound) {
+            registerListener();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (bound) {
+            unbindService(connection);
+            bound = false;
+        }
     }
 }

@@ -7,7 +7,9 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import androidx.core.app.NotificationCompat;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,27 +21,27 @@ import java.net.Socket;
 public class HttpServerService extends Service {
     private static final String CHANNEL_ID = "HttpServerChannel";
     private static final int PORT = 8080;
+    private static final int MAX_CONTENT_LENGTH = 65536; // 64KB max
     private ServerSocket serverSocket;
     private Thread serverThread;
     private boolean isRunning = false;
-    private static HttpServerService instance;
+    private OnTextReceivedListener listener;
+    private Handler mainHandler;
 
     public interface OnTextReceivedListener {
         void onTextReceived(String text);
     }
 
-    private OnTextReceivedListener listener;
-
-    public static void setOnTextReceivedListener(OnTextReceivedListener listener) {
-        if (instance != null) {
-            instance.listener = listener;
+    public void setListener(OnTextReceivedListener listener) {
+        synchronized (this) {
+            this.listener = listener;
         }
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        instance = this;
+        mainHandler = new Handler(Looper.getMainLooper());
         createNotificationChannel();
     }
 
@@ -101,6 +103,20 @@ public class HttpServerService extends Service {
                     }
                 }
 
+                // Validate content length
+                if (contentLength > MAX_CONTENT_LENGTH) {
+                    String response = "Content too large. Maximum " + MAX_CONTENT_LENGTH + " bytes allowed.";
+                    out.println("HTTP/1.1 413 Payload Too Large");
+                    out.println("Content-Type: text/plain");
+                    out.println("Content-Length: " + response.length());
+                    out.println("Connection: close");
+                    out.println();
+                    out.println(response);
+                    out.flush();
+                    client.close();
+                    return;
+                }
+
                 // Handle POST request to /paste
                 if ("POST".equals(method) && path.startsWith("/paste")) {
                     // Read the body
@@ -115,9 +131,11 @@ public class HttpServerService extends Service {
 
                     String receivedText = body.toString();
 
-                    // Notify listener
-                    if (listener != null) {
-                        listener.onTextReceived(receivedText);
+                    // Notify listener on main thread
+                    synchronized (this) {
+                        if (listener != null) {
+                            mainHandler.post(() -> listener.onTextReceived(receivedText));
+                        }
                     }
 
                     // Send HTTP response
@@ -161,12 +179,20 @@ public class HttpServerService extends Service {
         if (serverThread != null) {
             serverThread.interrupt();
         }
-        instance = null;
+        synchronized (this) {
+            listener = null;
+        }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return new LocalBinder();
+    }
+
+    public class LocalBinder extends android.os.Binder {
+        public HttpServerService getService() {
+            return HttpServerService.this;
+        }
     }
 
     private void createNotificationChannel() {
