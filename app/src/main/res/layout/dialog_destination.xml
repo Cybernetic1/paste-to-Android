@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Name:"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/destinationName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="e.g., Home PC"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Username:"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/destinationUser"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="e.g., yky"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Host:"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/destinationHost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="e.g., 192.168.0.101"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Port:"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/destinationPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="22"
+        android:inputType="number"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Directory:"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/destinationDirectory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="e.g., /home/yky/Downloads"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+</LinearLayout>

@@ -77,4 +77,47 @@
             android:textIsSelectable="true" />
     </ScrollView>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Clipboard to Linux"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/setupSSHKeyButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Setup SSH Key"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/manageDestinationsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Manage Destinations"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/destinationRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp">
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/sendClipboardButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Clipboard to Linux"
+        android:enabled="false" />
+
 </LinearLayout>
