@@ -1,12 +1,29 @@
 # Paste to Android
 
-Send short text strings from your Linux terminal to an Android device over your local network.
+Send short text strings between Linux and Android over your local network.
 
 ## Overview
 
-This project provides a simple solution for sending text from a Linux command line to an Android device. It consists of:
-- An Android app that runs an HTTP server to receive text
-- A Linux bash script (or direct curl commands) to send text
+This project provides a simple solution for sending text between a Linux machine and an Android device. It consists of:
+- An Android app that runs an HTTP server to receive text from Linux
+- An Android app that can send clipboard text to Linux over SSH/SCP
+- A Linux bash script (or direct curl commands) to send text to Android
+
+## First-Time Setup Checklist
+
+### Linux → Android
+- Build and install the Android app
+- Start the server in the app
+- Copy the Android IP address shown in the UI
+- Send a test message with `paste-to-android.sh` or `curl`
+
+### Android → Linux
+- Make sure the Linux machine has SSH running
+- Create or choose an SSH key pair
+- Add the public key to `~/.ssh/authorized_keys`
+- Import the private key into the Android app
+- Add a Linux destination in the app
+- Copy text on Android and tap **Send Clipboard to Linux**
 
 ## Features
 
@@ -16,6 +33,7 @@ This project provides a simple solution for sending text from a Linux command li
 - ✅ Real-time text display on Android
 - ✅ Easy to use command-line interface
 - ✅ Foreground service keeps server running
+- ✅ Android clipboard can be sent to Linux as a `.txt` file
 
 ## Prerequisites
 
@@ -25,6 +43,7 @@ This project provides a simple solution for sending text from a Linux command li
 
 ### Linux Machine
 - `curl` installed (usually pre-installed)
+- SSH server running for Android -> Linux sends
 - Connected to the same network as Android device
 
 ## Installation
@@ -58,6 +77,39 @@ This project provides a simple solution for sending text from a Linux command li
    ```bash
    sudo cp paste-to-android.sh /usr/local/bin/paste-to-android
    ```
+
+### Android -> Linux Setup
+
+1. **Make sure SSH is enabled on Linux**
+   - The Linux machine must be running an SSH server
+   - You should be able to log in from another machine with `ssh user@host`
+
+2. **Create a dedicated SSH key pair on Linux**
+   ```bash
+   ssh-keygen -t rsa -f ~/paste_key
+   ```
+   When prompted for a passphrase, press Enter for no passphrase.
+
+3. **Add the public key to Linux**
+   ```bash
+   cat ~/paste_key.pub >> ~/.ssh/authorized_keys
+   chmod 700 ~/.ssh
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+
+4. **Copy the private key to Android**
+   - The Android app needs the **private** key file (`~/paste_key`)
+   - Do **not** import the `.pub` file
+
+5. **Add a destination in the app**
+   - Tap **Setup SSH Key** and import the private key
+   - Tap **Manage Destinations**
+   - Add your Linux machine details, for example:
+     - Name: `Home PC`
+     - User: `yky`
+     - Host: `192.168.0.100`
+     - Port: `22`
+     - Directory: `/home/yky/Downloads`
 
 ## Usage
 
@@ -125,6 +177,13 @@ Both devices must be on the same local network (e.g., same WiFi). The Android de
 - Check the app is in foreground or check the notification
 - Verify the server is running (notification should be visible)
 - Check Android logs: `adb logcat | grep Paste`
+
+### Android -> Linux send fails
+- Confirm the Linux host IP is correct in the saved destination
+- Make sure the SSH server is running on the Linux machine
+- Make sure the imported key is the **private** key, not `*.pub`
+- Make sure the destination directory exists and is writable
+- If the key was generated with a passphrase, remove it or generate a new key without one
 
 ### Permission issues
 - The app requests necessary permissions on first run
