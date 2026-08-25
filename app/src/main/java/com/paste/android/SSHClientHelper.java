@@ -24,12 +24,15 @@ public class SSHClientHelper {
     public static void sendClipboardToLinux(
             LinuxDestination destination,
             String privateKeyPath,
+            String passphrase,
             String clipboardContent,
             TransferCallback callback) {
 
         new Thread(() -> {
             Session session = null;
             ChannelSftp channelSftp = null;
+
+            String target = destination.getUser() + "@" + destination.getHost() + ":" + destination.getPort();
 
             try {
                 // Generate filename with timestamp
@@ -38,16 +41,21 @@ public class SSHClientHelper {
 
                 // Setup JSch (modern fork with algorithm support)
                 JSch jsch = new JSch();
-                jsch.addIdentity(privateKeyPath);
+                if (passphrase != null && !passphrase.isEmpty()) {
+                    jsch.addIdentity(privateKeyPath, passphrase);
+                } else {
+                    jsch.addIdentity(privateKeyPath);
+                }
 
                 // Create session
                 session = jsch.getSession(destination.getUser(), destination.getHost(), destination.getPort());
-                
+
                 // Configure for modern SSH servers
                 Properties config = new Properties();
                 config.put("StrictHostKeyChecking", "no");
+                config.put("PreferredAuthentications", "publickey");
                 // Modern fork supports newer algorithms automatically
-                
+
                 session.setConfig(config);
                 session.setTimeout(TIMEOUT);
 
@@ -69,7 +77,7 @@ public class SSHClientHelper {
                 callback.onSuccess(filename);
 
             } catch (JSchException e) {
-                callback.onError("SSH Error: " + e.getMessage());
+                callback.onError("SSH Error (" + target + "): " + e.getMessage());
             } catch (SftpException e) {
                 callback.onError("SFTP Error: " + e.getMessage());
             } catch (Exception e) {

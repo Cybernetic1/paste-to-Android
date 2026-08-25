@@ -86,7 +86,7 @@ This project provides a simple solution for sending text between a Linux machine
 
 2. **Create a dedicated SSH key pair on Linux**
    ```bash
-   ssh-keygen -t rsa -f ~/paste_key
+   ssh-keygen -t rsa -m PEM -f paste_key
    ```
    When prompted for a passphrase, press Enter for no passphrase.
 
